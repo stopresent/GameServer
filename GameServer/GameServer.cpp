@@ -8,32 +8,41 @@
 #include <mutex>
 #include <future>
 
-// Thread Local Storage
+#include "ConcurrentQueue.h"
+#include "ConcurrentStack.h"
 
-//__declspec(thread) int32 value;
-thread_local int32 LThreadId = 0;
+LockQueue<int32> q;
+LockStack<int32> s;
 
-void ThreadMain(int32 threadId)
+void Push()
 {
-	LThreadId = threadId;
-
 	while (true)
 	{
-		cout << "Hi! I am Thread" << LThreadId << endl;
-		this_thread::sleep_for(1s);
+		int32 data = rand() % 100;
+		q.Push(data);
+
+		this_thread::sleep_for(10ms);
+	}
+}
+
+int32 Pop()
+{
+	while (true)
+	{
+		int data = 0;
+		if (q.TryPop(OUT data))
+			cout << data << endl;
 	}
 }
 
 int main()
 {
-	vector<thread> threads;
+	thread t1(Push);
+	thread t2(Pop);
+	thread t3(Pop);
 
-	for (int32 i = 0; i < 10; i++)
-	{
-		int32 threadId = i + 1;
-		threads.push_back(thread(ThreadMain, threadId));
-	}
+	t1.join();
+	t2.join();
+	t3.join();
 
-	for (thread& t : threads)
-		t.join();
 }
